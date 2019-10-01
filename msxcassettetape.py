@@ -3,6 +3,10 @@ class MsxCassetteTape:
     filename = ""
     tapedata = []
 
+    def setArray(self, array):
+        for idx in range(len(array)):
+            self.tapedata[idx] = array[idx]*4+3
+
     def csave(self):
         # File Header
         self.playLongHeader()
