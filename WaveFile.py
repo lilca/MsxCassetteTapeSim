@@ -15,7 +15,7 @@ class RiffHeader:
 class FormatChunk: # 24+alpha
     def __init__(self):
         self.id = 'fmt '
-        self.size = 24
+        self.size = 0
         self.format = 0    # WAVE_FORMAT_UNKNOWN
         self.channels = 1   # monoral=1, stereo=2
         self.samplerate = 44100
@@ -27,7 +27,7 @@ class FormatChunk: # 24+alpha
     def update(self):
         self.blockalign = int(self.bitswidth / 8 * self.channels)
         self.bytepersec = self.samplerate * self.blockalign
-        self.size = 24
+        self.size = 16
         if self.extended_size != 0:
             self.size += 2 + self.extended_size
     def setExtended(self, array):
