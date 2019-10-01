@@ -16,7 +16,7 @@ class FormatChunk: # 24+alpha
     def __init__(self):
         self.id = 'fmt '
         self.size = 0
-        self.format = 0    # WAVE_FORMAT_UNKNOWN
+        self.format = 1    # WAVE_FORMAT_PCM
         self.channels = 1   # monoral=1, stereo=2
         self.samplerate = 44100
         self.bytepersec = -1
@@ -54,7 +54,7 @@ class DataChunk:
         self.id = 'data'
         self.size = 0
         self.waveData = []
-    def setWaveData(self, array):
+    def extendWaveData(self, array):
         self.waveData.exptend(array)
         self.size = len(waveData)
     def clearWaveData(self):
@@ -79,7 +79,25 @@ class WaveFile:
             self.riff.writeRiffHeader(fp)
             self.fmt.writeFormatChunk(fp)
             self.data.writeDataChunk(fp)
+    def createWave(self, type, freq, second):
+        waves = int(self.fmt.samplerate * second / freq)
+        cycle = int(self.fmt.samplerate / waves)
+        res = []
+        val = 0
+        if type != 0:
+            val = 255
+        for idx in range(waves):
+            val = 255 - val
+            for i in range(int(cycle / 2)):
+                res.extend([val])
+            val = 255 - val
+            for i in range(int(cycle / 2)):
+                res.extend([val])
+        self.data.waveData = res
+        self.data.size = self.fmt.samplerate * second
+
 
 if __name__ == "__main__":
     wave = WaveFile()
+    wave.createWave(0, 440, 1)
     wave.writeWaveFile("/Users/mise/Documents/github/repository/MsxCassetteTapeSim/test.wav")
