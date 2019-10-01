@@ -1,3 +1,3 @@
 # MsxCassetteTapeSim
 
-This repository being edited.
+This repository is being edited.
