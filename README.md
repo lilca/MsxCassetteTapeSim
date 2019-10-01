@@ -1,3 +1,3 @@
 # MsxCassetteTapeSim
 
-This repository is incomplete.
+This repository being edited.
