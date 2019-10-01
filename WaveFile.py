@@ -1,6 +1,6 @@
 class RiffHeader:
     def __init__(self):
-        riff = 'RIFE'
+        riff = 'RIFF'
         size = 0
         type = 'WAVE'
 
@@ -23,3 +23,8 @@ class DataChunk:
         size = 0
         uwaveformData = []
   
+class WaveFile:
+    def __init__(self):
+        riff = RiffHeader()
+        fmt = FormatChunk()
+        data = DataChunk()
