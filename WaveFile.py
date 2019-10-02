@@ -18,17 +18,18 @@ class RiffHeader:
         fp.write(self.type.encode())
 
 class FormatChunk: # 24+alpha
-    def __init__(self):
+    def __init__(self, samplerate=44100 ,channels=1, bitswidth=8):
         self.id = 'fmt '
         self.size = 0
         self.format = 1    # WAVE_FORMAT_PCM
-        self.channels = 1   # monoral=1, stereo=2
-        self.samplerate = 44100
+        self.channels = channels   # monoral=1, stereo=2
+        self.samplerate = samplerate
         self.bytepersec = -1
         self.blockalign = -1
-        self.bitswidth = 8
+        self.bitswidth = bitswidth
         self.extended_size = 0
         self.extended = []
+        self.update()
     def update(self):
         self.blockalign = int(self.bitswidth / 8 * self.channels)
         self.bytepersec = self.samplerate * self.blockalign
@@ -71,9 +72,9 @@ class DataChunk:
         fp.write(bytes(self.waveData))
 
 class WaveFile:
-    def __init__(self):
+    def __init__(self, samplerate=44100 ,channels=1, bitswidth=8):
         self.riff = RiffHeader()
-        self.fmt = FormatChunk()
+        self.fmt = FormatChunk(samplerate, channels, bitswidth)
         self.data = DataChunk()
     def update(self):
         self.fmt.update()
@@ -86,7 +87,7 @@ class WaveFile:
             self.riff.writeRiffHeader(fp)
             self.fmt.writeFormatChunk(fp)
             self.data.writeDataChunk(fp)
-    def createWave(self, freq, dutyrate, msec):
+    def extendSquareWave(self, freq, dutyrate, msec):
         cycle = int(self.fmt.samplerate / freq)
         waves = int(self.fmt.samplerate * (msec / 1000) / cycle)
         print(waves)
@@ -103,6 +104,6 @@ class WaveFile:
 
 if __name__ == "__main__":
     wave = WaveFile()
-    wave.createWave(2400, 50, 1000)
-    wave.createWave(4800, 50, 1500)
+    wave.extendSquareWave(2400, 50, 1000)
+    wave.extendSquareWave(4800, 50, 1500)
     wave.writeWaveFile("/Users/mise/Documents/github/repository/MsxCassetteTapeSim/test.wav")
