@@ -9,13 +9,14 @@ class MsxCassetteTape:
     def setArray(self, array):
         for idx in range(len(array)):
             self.tapedata[idx] = array[idx]*4+3
-    def playShortHeader(self):
-
+    def playShortHeader(self, wavefile):
+        wavefile.extendSquareWave()
     def playLongHeader(self):
 
     def csave(self, filename6):
+        wave = WaveFile(44100, 1)
         # File Header
-        self.playLongHeader()
+        self.playLongHeader(wave)
         self.playByteRepeat(0xd3, 10)
         for idx in range(6):
             self.playByte(filename[idx])
