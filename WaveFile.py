@@ -60,8 +60,8 @@ class DataChunk:
         self.size = 0
         self.waveData = []
     def extendWaveData(self, array):
-        self.waveData.exptend(array)
-        self.size = len(waveData)
+        self.waveData.extend(array)
+        self.size = len(self.waveData)
     def clearWaveData(self):
         self.waveData = []
         self.size = 0
@@ -78,15 +78,17 @@ class WaveFile:
     def update(self):
         self.fmt.update()
         self.riff.update(self.fmt.size + self.data.size + 8 + 8)
+    def extendWave(self, array):
+        self.data.extendWaveData(array)
     def writeWaveFile(self, path):
         self.update()
         with open(path, 'wb') as fp:
             self.riff.writeRiffHeader(fp)
             self.fmt.writeFormatChunk(fp)
             self.data.writeDataChunk(fp)
-    def createWave(self, freq, dutyrate, second):
+    def createWave(self, freq, dutyrate, msec):
         cycle = int(self.fmt.samplerate / freq)
-        waves = int(self.fmt.samplerate * second / cycle)
+        waves = int(self.fmt.samplerate * (msec / 1000) / cycle)
         print(waves)
         print(cycle)
         print(cycle * dutyrate / 100)
@@ -97,12 +99,10 @@ class WaveFile:
                     res.extend([255])
                 else:
                     res.extend([0])
-        self.data.waveData.extend(res)
-        self.data.size = len(self.data.waveData)
-
+        self.extendWave(res)
 
 if __name__ == "__main__":
     wave = WaveFile()
-    wave.createWave(440, 50, 1)
-    wave.createWave(440, 50, 1)
+    wave.createWave(2400, 50, 1000)
+    wave.createWave(4800, 50, 1500)
     wave.writeWaveFile("/Users/mise/Documents/github/repository/MsxCassetteTapeSim/test.wav")
