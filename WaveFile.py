@@ -1,3 +1,8 @@
+##################################################
+# WaveFile.py
+# lilca reload
+# ver 1.0 : 2019/10/02
+##################################################
 import struct
 
 class RiffHeader:
@@ -79,25 +84,25 @@ class WaveFile:
             self.riff.writeRiffHeader(fp)
             self.fmt.writeFormatChunk(fp)
             self.data.writeDataChunk(fp)
-    def createWave(self, type, freq, second):
-        waves = int(self.fmt.samplerate * second / freq)
-        cycle = int(self.fmt.samplerate / waves)
+    def createWave(self, freq, dutyrate, second):
+        cycle = int(self.fmt.samplerate / freq)
+        waves = int(self.fmt.samplerate * second / cycle)
+        print(waves)
+        print(cycle)
+        print(cycle * dutyrate / 100)
         res = []
-        val = 0
-        if type != 0:
-            val = 255
         for idx in range(waves):
-            val = 255 - val
-            for i in range(int(cycle / 2)):
-                res.extend([val])
-            val = 255 - val
-            for i in range(int(cycle / 2)):
-                res.extend([val])
-        self.data.waveData = res
-        self.data.size = self.fmt.samplerate * second
+            for i in range(cycle):
+                if i <= cycle * dutyrate / 100:
+                    res.extend([255])
+                else:
+                    res.extend([0])
+        self.data.waveData.extend(res)
+        self.data.size = len(self.data.waveData)
 
 
 if __name__ == "__main__":
     wave = WaveFile()
-    wave.createWave(0, 440, 1)
+    wave.createWave(440, 50, 1)
+    wave.createWave(440, 50, 1)
     wave.writeWaveFile("/Users/mise/Documents/github/repository/MsxCassetteTapeSim/test.wav")

@@ -1,3 +1,5 @@
+import WaveFile
+
 class MsxCassetteTape:
     baudrate = 1200     # 1200bps or 2400bps
     filename = ""
