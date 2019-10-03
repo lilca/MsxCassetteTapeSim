@@ -87,12 +87,16 @@ class WaveFile:
             self.riff.writeRiffHeader(fp)
             self.fmt.writeFormatChunk(fp)
             self.data.writeDataChunk(fp)
-    def extendSquareWave(self, freq, dutyrate, msec):
+    def extendSilence(self, msec):
+        len = int(self.fmt.samplerate * msec / 1000)
+        res = []
+        for idx in range(len):
+            res.extend([0])
+        self.extendWave(res)
+    def extendSquareWaveN(self, freq, dutyrate, waves):
         cycle = int(self.fmt.samplerate / freq)
-        waves = int(self.fmt.samplerate * (msec / 1000) / cycle)
-        print(waves)
-        print(cycle)
-        print(cycle * dutyrate / 100)
+        waves = int(waves)
+
         res = []
         for idx in range(waves):
             for i in range(cycle):
@@ -101,6 +105,10 @@ class WaveFile:
                 else:
                     res.extend([0])
         self.extendWave(res)
+    def extendSquareWave(self, freq, dutyrate, msec):
+        cycle = int(self.fmt.samplerate / freq)
+        waves = int(self.fmt.samplerate * (msec / 1000) / cycle)
+        self.extendSquareWaveN(freq, dutyrate, waves)
 
 if __name__ == "__main__":
     wave = WaveFile()
