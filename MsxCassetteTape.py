@@ -55,7 +55,7 @@ class MsxCassetteTape:
             self.playByte(wavefile, ord(data))
     def playInterval(self, wavefile, msec):
         wavefile.extendSilence(msec)
-    def csave(self):
+    def csave(self, save_path):
         wave = WaveFile.WaveFile(self.samplerate)
         # File Header
         self.playLongHeader(wave)
@@ -68,9 +68,9 @@ class MsxCassetteTape:
         self.playShortHeader(wave)
         self.playByteArray(wave, self.tapedata)
         self.playByteRepeat(wave, 0x00, 7)
-        wave.writeWaveFile("/Users/mise/Documents/github/repository/MsxCassetteTapeSim/ctape.wav")
+        wave.writeWaveFile(save_path)
 
-    def save(self):
+    def save(self, save_path):
         wave = WaveFile.WaveFile(self.samplerate)
         # File Header
         self.playLongHeader(wave)
@@ -87,9 +87,9 @@ class MsxCassetteTape:
             self.playByte(wave, ord(self.tapedata[idx]))
         self.playByte(wave, self._CTRL_Z)
         self.playByteRepeat(wave, 0x00, (256 - length % 256 - 1))
-        wave.writeWaveFile("/Users/mise/Documents/github/repository/MsxCassetteTapeSim/tape.wav")
+        wave.writeWaveFile(save_path)
 
-    def bsave(self, begin_addr, end_addr, run_addr):
+    def bsave(self, save_path, begin_addr, end_addr, run_addr):
         wave = WaveFile.WaveFile(self.samplerate)
         # File Header
         self.playLongHeader(wave)
@@ -105,11 +105,16 @@ class MsxCassetteTape:
         self.playWord(wave, run_addr)
         for idx in range(end_addr - begin_addr):
             self.playByte(wave, ord(self.tapedata[idx]))
-        wave.writeWaveFile("/Users/mise/Documents/github/repository/MsxCassetteTapeSim/btape.wav")
+        wave.writeWaveFile(save_path)
+
+    def importWaveFile(self, load_path):
+        
 
 if __name__ == "__main__":
     tape = MsxCassetteTape()
     tape.extendText("' Yomikometa?")
-    tape.csave()
-    tape.save()
-    tape.bsave(800,810,800)
+    path = "/Users/mise/Documents/github/repository/MsxCassetteTapeSim"
+    #tape.csave(path + "/ctape.wav")
+    #tape.save(path + "/tape.wav")
+    #tape.bsave(path + "/btape.wav", 800, 810, 800)
+    tape.importWaveFile(path + "/sample.wav")

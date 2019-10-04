@@ -16,6 +16,15 @@ class RiffHeader:
         fp.write(self.riff.encode())
         fp.write(struct.pack("I", self.size))
         fp.write(self.type.encode())
+    def readRiffHeader(self, fp, data):
+        self.riff = chr(data[0]) + chr(data[1]) + chr(data[2]) + chr(data[3])
+        self.size = data[4] + data[5] * 256 + data[6] * 256 ** 2 + data[7] * 256 ** 3
+        self.type = chr(data[8]) + chr(data[9]) + chr(data[10]) + chr(data[11])
+        return 12
+    def print(self):
+        print(self.riff)
+        print(self.size)
+        print(self.type)
 
 class FormatChunk: # 24+alpha
     def __init__(self, samplerate=44100 ,channels=1, bitswidth=8):
@@ -54,6 +63,32 @@ class FormatChunk: # 24+alpha
         if self.extended_size != 0:
             fp.write(struct.pack("H", self.extended_size))
             fp.write(bytes(self.extended))
+    def readFormatChunk(self, fp, data, pos):
+        self.id = chr(data[pos++]) + chr(data[pos++]) + chr(data[pos++]) + chr(data[pos++])
+        self.size = data[pos++] + data[pos++] * 256 + data[pos++] * 256 ** 2 + data[pos++] * 256 ** 3
+        self.format = data[pos++] + data[pos++] * 256
+        self.channels = data[pos++] + data[pos++] * 256
+        self.samplerate = data[pos++] + data[pos++] * 256 + data[pos++] * 256 ** 2 + data[pos++] * 256 ** 3
+        self.bytepersec = data[pos++] + data[pos++] * 256 + data[pos++] * 256 ** 2 + data[pos++] * 256 ** 3
+        self.blockalign = data[pos++] + data[pos++] * 256
+        self.bitswidth = data[pos++] + data[pos++] * 256
+        if self.size > 16:
+            self.extended_size = data[pos++] + data[pos++] * 256
+            self.extended = []
+            for idx in range(self.extended_size):
+                self.extended.extend(data[pos++])
+        return pos
+    def print(self):
+        self.print(self.id)
+        self.print(self.size)
+        self.print(self.format)
+        self.print(self.channels)
+        self.print(self.samplerate)
+        self.print(self.bytepersec)
+        self.print(self.blockalign)
+        self.print(self.bitswidth)
+        self.print(self.extended_size)
+        self.print(self.extended)
 
 class DataChunk:
     def __init__(self):
@@ -81,6 +116,10 @@ class WaveFile:
         self.riff.update(self.fmt.size + self.data.size + 8 + 8)
     def extendWave(self, array):
         self.data.extendWaveData(array)
+    def readWaveFile(self, path):
+        with open(path, 'rb') as fp:
+            data = fp.read()
+        pos = self.riff.readRiffHeader(fp, data)
     def writeWaveFile(self, path):
         self.update()
         with open(path, 'wb') as fp:
@@ -115,3 +154,6 @@ if __name__ == "__main__":
     wave.extendSquareWave(2400, 50, 1000)
     wave.extendSquareWave(4800, 50, 1500)
     wave.writeWaveFile("/Users/mise/Documents/github/repository/MsxCassetteTapeSim/test.wav")
+    wave.readWaveFile("/Users/mise/Documents/github/repository/MsxCassetteTapeSim/test.wav")
+    wave.riff.print()
+    wave.fmt.print()
