@@ -6,6 +6,7 @@
 import WaveFile
 
 class MsxCassetteTape:
+    _CTRL_Z = 0x1a
     def __init__(self, filename="tapdat"):
         self.baudrate = 1200     # 1200bps or 2400bps
         self.samplerate = 44100
@@ -38,10 +39,18 @@ class MsxCassetteTape:
         # Stop bit
         self.playBit1(wavefile)
         self.playBit1(wavefile)
+    def playWord(self, wavefile, bytedata):
+        low = (bytedata & 0x00ff)
+        high = ((bytedata >> 8) & 0x00ff)
+        self.playByte(wavefile, low)
+        self.playByte(wavefile, high)
     def playByteRepeat(self, wavefile, bytedata, n):
         for idx in range(n):
             self.playByte(wavefile, bytedata)
     def playByteArray(self, wavefile, bytearray):
+        for data in bytearray:
+            self.playByte(wavefile, ord(data))
+    def playByteArrayN(self, wavefile, bytearray, n):
         for data in bytearray:
             self.playByte(wavefile, ord(data))
     def playInterval(self, wavefile, msec):
@@ -59,37 +68,48 @@ class MsxCassetteTape:
         self.playShortHeader(wave)
         self.playByteArray(wave, self.tapedata)
         self.playByteRepeat(wave, 0x00, 7)
-        wave.writeWaveFile("/Users/mise/Documents/github/repository/MsxCassetteTapeSim/tape.wav")
+        wave.writeWaveFile("/Users/mise/Documents/github/repository/MsxCassetteTapeSim/ctape.wav")
 
     def save(self):
+        wave = WaveFile.WaveFile(self.samplerate)
         # File Header
-        self.playLongHeader()
-        self.playByteRepeat(0xea, 10)
+        self.playLongHeader(wave)
+        self.playByteRepeat(wave, 0xea, 10)
         for idx in range(6):
-            self.playByte(filename[idx])
+            self.playByte(wave, ord(self.filename[idx]))
         # Interval
-        self.playInterval(1000)     // n[ms]
+        self.playInterval(wave, 1000)     # n[ms]
         # File Body
-        for idx in len(self.tapedata)/256:
-            self.playShortHeader()
-            self.playByteArray(pointer, 256)
+        length = len(self.tapedata)
+        for idx in range(length):
+            if idx % 256 == 0:
+                self.playShortHeader(wave)
+            self.playByte(wave, ord(self.tapedata[idx]))
+        self.playByte(wave, self._CTRL_Z)
+        self.playByteRepeat(wave, 0x00, (256 - length % 256 - 1))
+        wave.writeWaveFile("/Users/mise/Documents/github/repository/MsxCassetteTapeSim/tape.wav")
 
-    def bsave(self, startaddr, endaddr,runaddr):
+    def bsave(self, begin_addr, end_addr, run_addr):
+        wave = WaveFile.WaveFile(self.samplerate)
         # File Header
-        self.playLongHeader()
-        self.playByteRepeat(0xd0, 10)
+        self.playLongHeader(wave)
+        self.playByteRepeat(wave, 0xd0, 10)
         for idx in range(6):
-            self.playByte(filename[idx])
+            self.playByte(wave, ord(self.filename[idx]))
         # Interval
-        self.playInterval(1000)     // n[ms]
+        self.playInterval(wave, 1000)     # n[ms]
         # File Body
-        self.playShortHeader()
-        self.playInt(off_address)
-        self.playInt(last_address)
-        self.playInt(start_address)
-        self.playByteArray(pointer, last_address-off_address)
+        self.playShortHeader(wave)
+        self.playWord(wave, begin_addr)
+        self.playWord(wave, end_addr)
+        self.playWord(wave, run_addr)
+        for idx in range(end_addr - begin_addr):
+            self.playByte(wave, ord(self.tapedata[idx]))
+        wave.writeWaveFile("/Users/mise/Documents/github/repository/MsxCassetteTapeSim/btape.wav")
 
 if __name__ == "__main__":
     tape = MsxCassetteTape()
     tape.extendText("' Yomikometa?")
     tape.csave()
+    tape.save()
+    tape.bsave(800,810,800)
