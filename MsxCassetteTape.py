@@ -86,7 +86,7 @@ class MsxCassetteTape:
                 self.playShortHeader(wave)
             self.playByte(wave, ord(self.tapedata[idx]))
         self.playByte(wave, self._CTRL_Z)
-        self.playByteRepeat(wave, 0x00, (256 - length % 256 - 1))
+        self.playByteRepeat(wave, self._CTRL_Z, (256 - length % 256 - 1))
         wave.writeWaveFile(save_path)
 
     def bsave(self, save_path, begin_addr, end_addr, run_addr):
@@ -107,8 +107,58 @@ class MsxCassetteTape:
             self.playByte(wave, ord(self.tapedata[idx]))
         wave.writeWaveFile(save_path)
 
+    def roundBaud(self, freq):
+        return round(freqfr)
+
     def importWaveFile(self, load_path):
-        
+        wave = WaveFile.WaveFile()
+        wave.readWaveFile(load_path)
+        res = self.analysisWaveFile(wave, 0, 128)
+        # round
+        for idx in range(len(res)):
+            res[idx] = round(res[idx], -2)
+        #
+        sum = 0
+        for idx in range(10000):
+            sum += res[idx]
+        baud = int(round(sum / 10000, -2))
+        hbaud = int(baud / 2)
+        print("baud = "+str(baud))
+        print("hbaud = "+str(hbaud))
+        #
+        for idx in range(1, len(res)):
+            if res[idx-1] == hbaud:
+                print("0")
+                idx += 1
+            elif res[idx-1] == baud and res[idx] == baud:
+                print("1")
+                idx += 2
+
+    def analysisWaveFile(self, wave, channel, origin):
+        res = []
+        stream = wave.data.waveData
+        slen = len(stream)
+        blocksize = wave.fmt.blockalign
+        blocks = int(slen / blocksize)
+        samplesize = int(wave.fmt.bitswidth / 8)
+        status = 0
+        cnt = 0
+        for idx in range(blocks):
+            # get sample
+            index = idx * blocksize + channel * samplesize
+            sample = stream[index]
+            if samplesize > 1:
+                sample = sample * 256 + stream[index + 1]
+            # 立ち上がり
+            if sample > origin and status == 0:
+                status = 1
+                diff = idx - cnt
+                cnt = idx
+                res.extend([int(wave.fmt.samplerate/(diff+1e-10))])
+            # 立ち下がり
+            elif sample <= origin and status == 1:
+                status = 0
+        return res
 
 if __name__ == "__main__":
     tape = MsxCassetteTape()
@@ -117,4 +167,4 @@ if __name__ == "__main__":
     #tape.csave(path + "/ctape.wav")
     #tape.save(path + "/tape.wav")
     #tape.bsave(path + "/btape.wav", 800, 810, 800)
-    tape.importWaveFile(path + "/sample.wav")
+    tape.importWaveFile(path + "/cas.wav")
